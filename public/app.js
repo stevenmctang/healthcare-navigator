@@ -27,12 +27,18 @@ uploadForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  statusMessage.textContent = "Connecting to Healthcare Navigator...";
+  statusMessage.textContent = "Reading your document...";
   results.classList.add("hidden");
 
   try {
+    const fileBuffer = await file.arrayBuffer();
+
     const response = await fetch("/api/analyze", {
-      method: "POST"
+      method: "POST",
+      headers: {
+        "Content-Type": "application/pdf"
+      },
+      body: fileBuffer
     });
 
     const data = await response.json();
@@ -41,23 +47,24 @@ uploadForm.addEventListener("submit", async (event) => {
       throw new Error(data.error || "Something went wrong.");
     }
 
-    statusMessage.textContent = "API connection successful.";
+    statusMessage.textContent = "PDF text extracted successfully.";
 
     results.classList.remove("hidden");
 
-    documentType.textContent = "Backend Connected";
+    documentType.textContent = "PDF Read Successfully";
+
     providerResult.textContent = "Coming next";
     dateResult.textContent = "Coming next";
     serviceResult.textContent = "Coming next";
     patientResult.textContent = "Coming next";
 
     summaryResult.textContent =
-      data.message || "Healthcare Navigator API is working.";
+      data.textPreview || "Text was extracted, but no preview was returned.";
   } catch (error) {
     console.error(error);
 
     statusMessage.textContent =
-      "Could not connect to the analysis service.";
+      error.message || "Could not analyze the PDF.";
 
     results.classList.add("hidden");
   }
