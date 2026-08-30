@@ -1,4 +1,5 @@
 const pdfParse = require("pdf-parse");
+const { ocrPdf } = require("./ocr");
 
 // ---------------------------------------------------------------------------
 // Field extraction
@@ -374,12 +375,18 @@ module.exports = async function handler(req, res) {
     }
 
     const pdfData = await pdfParse(buffer);
-    const text = pdfData.text || "";
+    let text = pdfData.text || "";
+    let usedOcr = false;
+
+    if (!text.trim()) {
+      usedOcr = true;
+      text = await ocrPdf(buffer);
+    }
 
     if (!text.trim()) {
       return res.status(400).json({
         error:
-          "We couldn't find readable text in that PDF. Scanned-image OCR will be added later.",
+          "We couldn't read any text in that PDF, even with OCR. The file may be blank or corrupted.",
       });
     }
 
@@ -388,9 +395,12 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Document analyzed successfully.",
+      message: usedOcr
+        ? "Document analyzed successfully (text recovered via OCR)."
+        : "Document analyzed successfully.",
       characterCount: text.length,
       textPreview: text.slice(0, 1500),
+      usedOcr,
       fields,
       explanations,
     });

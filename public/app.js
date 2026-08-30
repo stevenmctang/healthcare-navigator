@@ -168,7 +168,8 @@ uploadForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  statusMessage.textContent = "Reading and analyzing your document...";
+  statusMessage.textContent =
+    "Reading and analyzing your document... Scanned documents may take a little longer.";
   results.classList.add("hidden");
 
   try {
@@ -189,6 +190,9 @@ uploadForm.addEventListener("submit", async (event) => {
     }
 
     statusMessage.textContent = data.message || "Document analyzed successfully.";
+    if (data.usedOcr) {
+      statusMessage.textContent += " This scanned document was read using OCR.";
+    }
     results.classList.remove("hidden");
 
     if (data.fields && data.explanations) {
